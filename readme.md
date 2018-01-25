@@ -13,6 +13,8 @@ __Translations__
 * [Spanish](https://github.com/idcmardelplata/functional-programming-jargon/tree/master)
 * [Chinese](https://github.com/shfshanyue/fp-jargon-zh)
 * [Bahasa Indonesia](https://github.com/wisn/jargon-pemrograman-fungsional)
+* [Scala World](https://github.com/ikhoon/functional-programming-jargon.scala)
+* [Korean](https://github.com/sphilee/functional-programming-jargon)
 
 __Table of Contents__
 <!-- RM(noparent,notop) -->
@@ -52,6 +54,7 @@ __Table of Contents__
 * [Setoid](#setoid)
 * [Semigroup](#semigroup)
 * [Foldable](#foldable)
+* [Lens](#lens)
 * [Type Signatures](#type-signatures)
 * [Algebraic data type](#algebraic-data-type)
   * [Sum type](#sum-type)
@@ -155,9 +158,10 @@ const addTo = x => y => x + y
 var addToFive = addTo(5)
 addToFive(3) // returns 8
 ```
-The function ```addTo()``` returns a function(internally called ```add()```), lets store it in a variable called ```addToFive``` with a curried call having parameter 5.
 
-Ideally, when the function ```addTo``` finishes execution, its scope, with local variables add, x, y should not be accessible. But, it returns 8 on calling ```addToFive()```. This means that the state of the function ```addTo``` is saved even after the block of code has finished executing, otherwise there is no way of knowing that ```addTo``` was called as ```addTo(5)``` and the value of x was set to 5.
+The function `addTo()` returns a function(internally called `add()`), lets store it in a variable called `addToFive` with a curried call having parameter 5.
+
+Ideally, when the function `addTo` finishes execution, its scope, with local variables add, x, y should not be accessible. But, it returns 8 on calling `addToFive()`. This means that the state of the function `addTo` is saved even after the block of code has finished executing, otherwise there is no way of knowing that `addTo` was called as `addTo(5)` and the value of x was set to 5.
 
 Lexical scoping is the reason why it is able to find the values of x and add - the private variables of the parent which has finished executing. This value is called a Closure.
 
@@ -410,7 +414,7 @@ __Composable__
 object.map(compose(f, g)) ≍ object.map(g).map(f)
 ```
 
-(`f`, `g` be arbitrary functions)
+(`f`, `g` are arbitrary functions)
 
 A common functor in JavaScript is `Array` since it abides to the two functor rules:
 
@@ -729,6 +733,56 @@ const sum = (list) => list.reduce((acc, val) => acc + val, 0)
 sum([1, 2, 3]) // 6
 ```
 
+## Lens ##
+A lens is a structure (often an object or function) that pairs a getter and a non-mutating setter for some other data
+structure.
+
+```js
+// Using [Ramda's lens](http://ramdajs.com/docs/#lens)
+const nameLens = R.lens(
+  // getter for name property on an object
+  (obj) => obj.name,
+  // setter for name property
+  (val, obj) => Object.assign({}, obj, {name: val})
+)
+```
+
+Having the pair of get and set for a given data structure enables a few key features.
+
+```js
+const person = {name: 'Gertrude Blanch'}
+
+// invoke the getter
+R.view(nameLens, person) // 'Gertrude Blanch'
+
+// invoke the setter
+R.set(nameLens, 'Shafi Goldwasser', person) // {name: 'Shafi Goldwasser'}
+
+// run a function on the value in the structure
+R.over(nameLens, uppercase, person) // {name: 'GERTRUDE BLANCH'}
+```
+
+Lenses are also composable. This allows easy immutable updates to deeply nested data.
+
+```js
+// This lens focuses on the first item in a non-empty array
+const firstLens = R.lens(
+  // get first item in array
+  xs => xs[0],
+  // non-mutating setter for first item in array
+  (val, [__, ...xs]) => [val, ...xs]
+)
+
+const people = [{name: 'Gertrude Blanch'}, {name: 'Shafi Goldwasser'}]
+
+// Despite what you may assume, lenses compose left-to-right.
+R.over(compose(firstLens, nameLens), uppercase, people) // [{'name': 'GERTRUDE BLANCH'}, {'name': 'Shafi Goldwasser'}]
+```
+
+Other implementations:
+* [partial.lenses](https://github.com/calmm-js/partial.lenses) - Tasty syntax sugar and a lot of powerful features
+* [nanoscope](http://www.kovach.me/nanoscope/) - Fluent-interface
+
 ## Type Signatures
 
 Often functions in JavaScript will include comments that indicate the types of their arguments and return values.
@@ -792,7 +846,7 @@ A **product** type combines types together in a way you're probably more familia
 
 ```js
 // point :: (Number, Number) -> {x: Number, y: Number}
-const point = (x, y) => ({x: x, y: y})
+const point = (x, y) => ({ x, y })
 ```
 It's called a product because the total possible values of the data structure is the product of the different values. Many languages have a tuple type which is the simplest formulation of a product type.
 
@@ -838,7 +892,7 @@ const getItem = (cart) => maybeProp('item', cart)
 const getPrice = (item) => maybeProp('price', item)
 
 // getNestedPrice :: cart -> Option a
-const getNestedPrice = (cart) => getItem(obj).chain(getPrice)
+const getNestedPrice = (cart) => getItem(cart).chain(getPrice)
 
 getNestedPrice({}) // None()
 getNestedPrice({item: {foo: 1}}) // None()
@@ -853,7 +907,7 @@ getNestedPrice({item: {price: 9.99}}) // Some(9.99)
 * [Immutable](https://github.com/facebook/immutable-js/)
 * [Ramda](https://github.com/ramda/ramda)
 * [ramda-adjunct](https://github.com/char0n/ramda-adjunct)
-* [Folktale](http://folktalejs.org)
+* [Folktale](http://folktale.origamitower.com/)
 * [monet.js](https://cwmyers.github.io/monet.js/)
 * [lodash](https://github.com/lodash/lodash)
 * [Underscore.js](https://github.com/jashkenas/underscore)
